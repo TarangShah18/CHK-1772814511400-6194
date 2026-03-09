@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-grad-1: #0f172a;
+            --bg-grad-2: #1e1b4b;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            
+            /* Dynamic colors based on result */
+            --real-color: #10b981; /* Emerald */
+            --fake-color: #ef4444; /* Red */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+            z-index: 0;
+            animation: float 10s infinite alternate ease-in-out;
+        }
+        
+        /* The glow color depends on the result */
+        .blob-bg {
+            width: 500px;
+            height: 500px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            {% if label == 'Real' %}
+            background: rgba(16, 185, 129, 0.2);
+            {% else %}
+            background: rgba(239, 68, 68, 0.2);
+            {% endif %}
+        }
+
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 50px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            z-index: 10;
+            transform: scale(0.95);
+            opacity: 0;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        h2 {
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        
+        .result-box {
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+        }
+
+        .label {
+            font-weight: 800;
+            font-size: 3.5rem;
+            margin: 0 0 10px 0;
+            {% if label == 'Real' %}
+            color: var(--real-color);
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            {% else %}
+            color: var(--fake-color);
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            {% endif %}
+        }
+        
+        .confidence {
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+        
+        .conf-value {
+            font-weight: 800;
+            {% if label == 'Real' %}
+            color: var(--real-color);
+            {% else %}
+            color: var(--fake-color);
+            {% endif %}
+            font-size: 1.5rem;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px 30px;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-bg"></div>
+
+    <div class="container">
+        <h2>Analysis Result</h2>
+        
+        <div class="result-box">
+            <h1 class="label">{{ label }}</h1>
+            <div class="confidence">
+                Confidence: <span class="conf-value">{{ confidence }}</span>
+            </div>
+        </div>
+        
+        <a href="/" style="text-decoration: none;">
+            <button>Analyze Another Image</button>
+        </a>
+    </div>
+</body>
+</html>
