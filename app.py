@@ -2,13 +2,14 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import os
 import traceback
-from predict import predict_deepfake, predict_video_deepfake
-from preprocess import preprocess_image, preprocess_video
+from predict import predict_deepfake, predict_video_deepfake, predict_audio_deepfake
+from preprocess import preprocess_image, preprocess_video, preprocess_audio
 
 import mimetypes
 
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv'}
+ALLOWED_AUDIO_EXTENSIONS = {'wav', 'mp3', 'ogg', 'flac'}
 
 def allowed_file(filename, allowed_set):
     # Basic extension check
@@ -43,8 +44,9 @@ def detect():
         
     is_image = allowed_file(file.filename, ALLOWED_IMAGE_EXTENSIONS)
     is_video = allowed_file(file.filename, ALLOWED_VIDEO_EXTENSIONS)
+    is_audio = allowed_file(file.filename, ALLOWED_AUDIO_EXTENSIONS)
     
-    if not (is_image or is_video):
+    if not (is_image or is_video or is_audio):
         return redirect(url_for('home'))
     
     secure_name = secure_filename(file.filename)
@@ -59,6 +61,9 @@ def detect():
         if is_video:
             frames = preprocess_video(filepath)
             label, confidence = predict_video_deepfake(frames)
+        elif is_audio:
+            features = preprocess_audio(filepath)
+            label, confidence = predict_audio_deepfake(features)
         else:
             image = preprocess_image(filepath)
             label, confidence = predict_deepfake(image)

@@ -387,7 +387,7 @@
                 <span class="upload-icon">💠</span>
                 <span class="upload-text">INITIALIZE UPLOAD</span>
                 <span class="file-name" id="fileName">DRAG & DROP OR CLICK</span>
-                <input type="file" name="image" id="fileInput" accept="image/*,video/*">
+                <input type="file" name="image" id="fileInput" accept="image/*,video/*,audio/*">
             </div>
             
             <button type="submit" class="submit-btn" id="submitBtn">RUN ANALYSIS</button>
@@ -436,7 +436,7 @@
         const clearBtn = document.getElementById('clearBtn');
         const toastContainer = document.getElementById('toastContainer');
 
-        const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'mp4', 'avi', 'mov', 'mkv'];
+        const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'mp4', 'avi', 'mov', 'mkv', 'wav', 'mp3', 'ogg', 'flac'];
         const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
         function showToast(message) {
