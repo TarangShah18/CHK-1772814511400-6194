@@ -3,164 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis Result</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>Authentix // Analysis Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-grad-1: #0f172a;
-            --bg-grad-2: #1e1b4b;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --bg-base: #020617;
+            --glass-bg: rgba(15, 23, 42, 0.6);
             
-            /* Dynamic colors based on result */
-            --real-color: #10b981; /* Emerald */
-            --fake-color: #ef4444; /* Red */
+            {% if label == 'Real' %}
+            --status-color: #10b981; /* Emerald */
+            --status-glow: rgba(16, 185, 129, 0.3);
+            --status-dim: rgba(16, 185, 129, 0.1);
+            {% else %}
+            --status-color: #ef4444; /* Red */
+            --status-glow: rgba(239, 68, 68, 0.4);
+            --status-dim: rgba(239, 68, 68, 0.1);
+            {% endif %}
+            
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-base);
             color: var(--text-main);
             min-height: 100vh;
-            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            perspective: 1000px;
         }
 
-        .blob {
+        #neuralCanvas {
             position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.6;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: 0;
-            animation: float 10s infinite alternate ease-in-out;
-        }
-        
-        /* The glow color depends on the result */
-        .blob-bg {
-            width: 500px;
-            height: 500px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            {% if label == 'Real' %}
-            background: rgba(16, 185, 129, 0.2);
-            {% else %}
-            background: rgba(239, 68, 68, 0.2);
+            opacity: 0.7;
+            pointer-events: none;
+            {% if label != 'Real' %}
+            filter: contrast(1.2) drop-shadow(0 0 5px rgba(239,68,68,0.5));
             {% endif %}
         }
 
-        @keyframes float {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            100% { transform: translate(-50%, -50%) scale(1.1); }
+        .glow-orb {
+            position: absolute;
+            width: 700px; height: 700px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--status-glow) 0%, transparent 60%);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            filter: blur(50px);
+            animation: pulseGlow 4s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+        
+        {% if label != 'Real' %}
+        .glow-orb {
+            animation: pulseFakeGlow 1.5s infinite alternate ease-in-out;
+        }
+        @keyframes pulseFakeGlow {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.4; left: 49%; }
+        }
+        {% endif %}
+
+        @keyframes pulseGlow {
+            0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
         }
 
         .container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            padding: 50px;
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            max-width: 450px;
-            width: 90%;
+            position: relative;
             z-index: 10;
-            transform: scale(0.95);
-            opacity: 0;
-            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes popIn {
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        h2 {
-            font-weight: 600;
-            font-size: 1.5rem;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-        
-        .result-box {
-            padding: 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid var(--status-color);
+            padding: 50px 40px;
             border-radius: 20px;
-            margin-bottom: 30px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--glass-border);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7), 
+                        0 0 40px var(--status-dim);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .terminal-header {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .result-box {
+            position: relative;
+            margin: 30px 0;
+        }
+
+        /* SVG Circular Progress */
+        .progress-ring {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .progress-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: transparent;
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        .progress-ring-track {
+            stroke: rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-ring-fill {
+            stroke: var(--status-color);
+            stroke-dasharray: 440; /* 2 * PI * r (r=70) */
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 2s cubic-bezier(0.16, 1, 0.3, 1);
+            filter: drop-shadow(0 0 8px var(--status-color));
+        }
+
+        .progress-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 2.5rem;
+            color: var(--text-main);
+            text-shadow: 0 0 15px var(--status-glow);
+        }
+
+        .progress-percent span {
+            font-size: 1rem;
+            color: var(--text-dim);
         }
 
         .label {
-            font-weight: 800;
-            font-size: 3.5rem;
-            margin: 0 0 10px 0;
-            {% if label == 'Real' %}
-            color: var(--real-color);
-            text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-            {% else %}
-            color: var(--fake-color);
-            text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 3rem;
+            line-height: 1;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            color: var(--status-color);
+            text-shadow: 0 0 25px var(--status-glow);
+            text-transform: uppercase;
+            {% if label != 'Real' %}
+            animation: textGlitch 0.15s infinite alternate;
             {% endif %}
-        }
-        
-        .confidence {
-            font-size: 1.2rem;
-            color: var(--text-main);
-        }
-        
-        .conf-value {
-            font-weight: 800;
-            {% if label == 'Real' %}
-            color: var(--real-color);
-            {% else %}
-            color: var(--fake-color);
-            {% endif %}
-            font-size: 1.5rem;
         }
 
-        button {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 15px 30px;
-            border: 1px solid var(--glass-border);
+        @keyframes textGlitch {
+            0% { transform: translate(2px, 2px); text-shadow: 2px 0 #ef4444, -2px 0 #0ff; }
+            100% { transform: translate(-2px, -2px); text-shadow: -2px 0 #ef4444, 2px 0 #0ff; }
+        }
+        
+        .sys-msg {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-dim);
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        .btn-reboot {
+            background: linear-gradient(45deg, var(--status-dim), transparent);
+            color: var(--text-main);
+            border: 1px solid var(--status-color);
             border-radius: 12px;
+            padding: 16px 32px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
             cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: 600;
             width: 100%;
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
-            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px var(--status-dim);
         }
 
-        button:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .btn-reboot:hover {
+            background: var(--status-dim);
+            box-shadow: 0 0 30px var(--status-glow);
             transform: translateY(-2px);
+            text-shadow: 0 0 8px var(--text-main);
         }
+
+        .btn-reboot::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: skewX(-20deg);
+            transition: 0.5s;
+        }
+
+        .btn-reboot:hover::before {
+            left: 150%;
+        }
+
     </style>
 </head>
 <body>
-    <div class="blob blob-bg"></div>
+    <canvas id="neuralCanvas"></canvas>
+    <div class="glow-orb"></div>
 
-    <div class="container">
-        <h2>Analysis Result</h2>
+    <div class="container" id="mainContainer">
+        <div class="terminal-header">
+            <span>> NEURAL_ANALYSIS</span>
+            <span style="color:var(--status-color)">[ COMPLETE ]</span>
+        </div>
         
         <div class="result-box">
-            <h1 class="label">{{ label }}</h1>
-            <div class="confidence">
-                Confidence: <span class="conf-value">{{ confidence }}</span>
+            <div class="progress-ring">
+                <svg viewBox="0 0 160 160">
+                    <circle class="progress-ring-track" cx="80" cy="80" r="70"></circle>
+                    <circle class="progress-ring-fill" id="ringFill" cx="80" cy="80" r="70"></circle>
+                </svg>
+                <div class="progress-percent" id="percentText">0<span>%</span></div>
             </div>
+
+            <h1 class="label">{{ label }}</h1>
+            <div class="sys-msg" id="sysMsg">Awaiting metrics...</div>
         </div>
         
         <a href="/" style="text-decoration: none;">
-            <button>Analyze Another Image</button>
+            <button class="btn-reboot">REBOOT SCANNER</button>
         </a>
     </div>
+
+    <script>
+        // -- 1. Circular Progress Animation --
+        const confString = "{{ confidence }}";
+        // Attempt to parse float from e.g. "98.50%" or "98.50"
+        let targetConf = parseFloat(confString.replace(/[^\d.]/g, ''));
+        if(isNaN(targetConf)) targetConf = 0;
+        
+        const isReal = "{{ label }}" === "Real";
+        
+        // Dynamic messaging based on result
+        const sysMsgEl = document.getElementById('sysMsg');
+        if(isReal) {
+            sysMsgEl.innerHTML = "Original media verified. <br/>No deepfake signatures detected.";
+        } else {
+            sysMsgEl.innerHTML = "<span style='color:#ef4444'>WARNING: Artificial manipulation detected.</span>";
+        }
+
+        const ringFill = document.getElementById('ringFill');
+        const percentText = document.getElementById('percentText');
+        const radius = ringFill.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+
+        ringFill.style.strokeDasharray = `${circumference} ${circumference}`;
+        ringFill.style.strokeDashoffset = circumference;
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            ringFill.style.strokeDashoffset = offset;
+        }
+
+        // Animate progress text and ring
+        setTimeout(() => {
+            setProgress(targetConf);
+            
+            let start = 0;
+            const duration = 2000;
+            const startTime = performance.now();
+
+            function animateNum(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease out quart
+                const easeOut = 1 - Math.pow(1 - progress, 4);
+                const currentVal = (easeOut * targetConf).toFixed(1);
+                
+                percentText.innerHTML = `${currentVal}<span>%</span>`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animateNum);
+                } else {
+                    percentText.innerHTML = `${targetConf.toFixed(2)}<span>%</span>`;
+                }
+            }
+            requestAnimationFrame(animateNum);
+        }, 300); // slight delay for intro animation
+
+        // -- 2. Neural Canvas Background --
+        const canvas = document.getElementById('neuralCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles;
+        
+        // Color depends on result
+        const pColor = isReal ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.7)';
+        const lColor = isReal ? '16, 185, 129' : '239, 68, 68';
+
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+            // More particles if fake, for a more chaotic look
+            const divisor = isReal ? 12000 : 8000; 
+            let particleCount = Math.floor((width * height) / divisor);
+            
+            for(let i=0; i<particleCount; i++) {
+                // Fakes have faster, more erratic particles
+                const speed = isReal ? 1 : 2.5;
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * speed,
+                    vy: (Math.random() - 0.5) * speed,
+                    radius: Math.random() * 2 + 0.5
+                });
+            }
+        }
+        
+        function animateCanvas() {
+            requestAnimationFrame(animateCanvas);
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if(p.x < 0 || p.x > width) p.vx *= -1;
+                if(p.y < 0 || p.y > height) p.vy *= -1;
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = pColor;
+                ctx.fill();
+                
+                for(let j=index+1; j<particles.length; j++) {
+                    let p2 = particles[j];
+                    let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    const minDist = isReal ? 130 : 150;
+                    if(dist < minDist) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(${lColor}, ${0.15 - dist/800})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            });
+        }
+        
+        initCanvas();
+        animateCanvas();
+        window.addEventListener('resize', initCanvas);
+
+        // -- 3. 3D Tilt Effect on Container (Jittery if FAKE) --
+        const container = document.getElementById('mainContainer');
+        document.body.addEventListener('mousemove', (e) => {
+            let xAxis = (window.innerWidth / 2 - e.pageX) / 40;
+            let yAxis = (window.innerHeight / 2 - e.pageY) / 40;
+            
+            if(!isReal) {
+                // Add slight jitter for FAKE result
+                xAxis += (Math.random() - 0.5) * 2;
+                yAxis += (Math.random() - 0.5) * 2;
+            }
+            container.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+        
+        document.body.addEventListener('mouseleave', () => {
+            container.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+
+    </script>
 </body>
 </html>

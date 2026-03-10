@@ -4,12 +4,22 @@ import os
 from predict import predict_deepfake, predict_video_deepfake
 from preprocess import preprocess_image, preprocess_video
 
+import mimetypes
+
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv'}
 
 def allowed_file(filename, allowed_set):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in allowed_set
+    # Basic extension check
+    if '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    if ext not in allowed_set:
+        return False
+        
+    # Optional: We could do a basic mimetype check here but relying on extension is usually fine for initial check
+    # mimetypes.guess_type(filename)
+    return True
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
@@ -51,11 +61,23 @@ def detect():
         else:
             image = preprocess_image(filepath)
             label, confidence = predict_deepfake(image)
+    except ValueError as e:
+        flash(f'File processing error: {str(e)}')
+        return redirect(url_for('home'))
+    except Exception as e:
+        flash('An unexpected error occurred during analysis.')
+        print(f"Prediction error: {e}")
+        return redirect(url_for('home'))
     finally:
         if os.path.exists(filepath):
-            os.remove(filepath)
+            try:
+                os.remove(filepath)
+            except Exception as e:
+                print(f"Error removing temporary file: {e}")
 
     return render_template('result.html', label=label, confidence=f"{confidence*100:.2f}%")
 
 if __name__ == '__main__':
+    # Initialize model on startup asynchronously or let it lazy load
+    # (Leaving lazy loading as default)
     app.run(debug=True)
