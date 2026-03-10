@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import os
+import traceback
 from predict import predict_deepfake, predict_video_deepfake
 from preprocess import preprocess_image, preprocess_video
 
@@ -65,8 +66,9 @@ def detect():
         flash(f'File processing error: {str(e)}')
         return redirect(url_for('home'))
     except Exception as e:
-        flash('An unexpected error occurred during analysis.')
-        print(f"Prediction error: {e}")
+        trace = traceback.format_exc()
+        flash(f'Unexpected error during analysis: {str(e)}')
+        print("Prediction error:", trace)
         return redirect(url_for('home'))
     finally:
         if os.path.exists(filepath):
