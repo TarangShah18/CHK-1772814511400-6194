@@ -1,0 +1,22 @@
+# General
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+
+# Large Model Weights
+model/deepfake_model.h5
+model/deepfake_video_model.h5
+
+# Application Data
+uploads/*
+!uploads/.gitkeep
+dataset_audio/
+dataset/
+dataset_video/
+
+# Environment
+.env
+.flaskenv
